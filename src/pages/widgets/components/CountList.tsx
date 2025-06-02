@@ -1,7 +1,11 @@
-import React from "react";
+// Определяем интерфейс для пропсов компонента CountList
+interface CountListProps {
+    color: string;
+    name: string;
+    count: number;
+}
 
-const CountList = ({color,name,count}) => {
-
+const CountList: React.FC<CountListProps> = ({ color, name, count }) => {
     return (
         <div key={color} style={{
             backgroundColor: color,

@@ -1,39 +1,56 @@
-import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import image from './dinasty.jpg';
+import MapDisplay from './pages/MapDisplay';
 
-const client = generateClient<Schema>();
+const rows = 25;
+const cols = 42;
+
+function Loading() {
+  return <div>Завантаження...</div>;
+}
 
 function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
+    const img = new Image();
+    img.src = image;
+    img.onload = () => {
+      setIsImageLoaded(true);
+    };
   }, []);
 
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
-
   return (
-    <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
-      </div>
-    </main>
+    <Router>
+      {isImageLoaded ? (
+        <Routes>
+          <Route
+            path="/administration"
+            element={
+              <MapDisplay
+                imageUrl={image}
+                rows={rows}
+                cols={cols}
+                disabled={false}
+              />
+            }
+          />
+          <Route
+            path="/"
+            element={
+              <MapDisplay
+                imageUrl={image}
+                rows={rows}
+                cols={cols}
+                disabled={true}
+              />
+            }
+          />
+        </Routes>
+      ) : (
+        <Loading />
+      )}
+    </Router>
   );
 }
 
