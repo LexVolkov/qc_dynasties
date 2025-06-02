@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import image from './dinasty.jpg';
+import image from '/dinasty.jpg';
 import MapDisplay from './pages/MapDisplay';
 
 const rows = 25;

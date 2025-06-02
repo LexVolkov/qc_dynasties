@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import HoverPopUp from "../HoverPopUp";
 
 // Определяем типы для rowNames и colNames.
@@ -13,9 +13,11 @@ interface ImgMapProps {
     squareWidth: number;
     squareHeight: number;
     cols: number;
+    rows: number;
     selectedSquares: number[]; // Массив индексов выбранных квадратов
     onClick: (index: number) => void; // Функция, принимающая число и ничего не возвращающая
     disabled: boolean; // Флаг для отключения кликов
+    dynasties: { [key: string]: string };
 }
 
 const ImgMap: React.FC<ImgMapProps> = ({
@@ -26,23 +28,51 @@ const ImgMap: React.FC<ImgMapProps> = ({
     cols,
     selectedSquares,
     onClick,
-    disabled
+    disabled,
+    dynasties
 }) => {
-    // hoveredSquare может быть либо числом (индексом), либо null
     const [hoveredSquare, setHoveredSquare] = useState<number | null>(null);
+    const [hoveredName, setHoveredName] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStartIndex, setDragStartIndex] = useState<number | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    const handleSquareMouseEnter = (index: number) => {
+    const handleSquareMouseEnter = (index: number, color: string | null) => {
         setHoveredSquare(index);
+        setHoveredName(color ? dynasties[color] : null);
+
+        if (isDragging && dragStartIndex !== null && !disabled) {
+            onClick(index);
+        }
     };
 
     const handleSquareMouseLeave = () => {
         setHoveredSquare(null);
+        setHoveredName(null);
+    };
+
+    const handleMouseDown = (index: number) => {
+        if (!disabled) {
+            setIsDragging(true);
+            setDragStartIndex(index);
+            onClick(index);
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+        setDragStartIndex(null);
     };
 
     return (
-        <div style={{
-            width: "calc(100% - 150px)",
-        }}>
+        <div
+            style={{
+                width: "calc(100% - 150px)",
+            }}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            ref={containerRef}
+        >
             <div style={{
                 position: "relative",
                 backgroundImage: `url(${imageUrl})`,
@@ -54,14 +84,8 @@ const ImgMap: React.FC<ImgMapProps> = ({
                 {squares.map((color, index) => (
                     <div
                         key={index}
-                        // Тип 'onClick' должен быть 'MouseEvent<HTMLDivElement>'
-                        // Для обработки клика используем функциональный подход, чтобы не было disabled && onClick(index)
-                        onClick={() => {
-                            if (!disabled) {
-                                onClick(index);
-                            }
-                        }}
-                        onMouseEnter={() => handleSquareMouseEnter(index)}
+                        onMouseDown={() => handleMouseDown(index)}
+                        onMouseEnter={() => handleSquareMouseEnter(index, color)}
                         onMouseLeave={handleSquareMouseLeave}
                         style={{
                             position: "absolute",
@@ -69,21 +93,24 @@ const ImgMap: React.FC<ImgMapProps> = ({
                             height: `${squareHeight}%`,
                             top: `${Math.floor(index / cols) * squareHeight}%`,
                             left: `${(index % cols) * squareWidth}%`,
-                            // `color` может быть null, поэтому проверяем его
                             backgroundColor: color ? `${color}90` : "transparent",
-                            border: selectedSquares.includes(index) ? "2px solid blue" : "1px solid rgba(0,0,0,0.1)",
+                            border: selectedSquares.includes(index) ? "3px solid white" : "1px solid rgba(0,0,0,0.1)",
                             boxSizing: "border-box",
-                            // Курсор изменяется только если не disabled
                             cursor: disabled ? "default" : "pointer",
+                            userSelect: "none",
+                            // Мгновенное внутреннее свечение
+                            boxShadow: hoveredSquare === index
+                                ? "inset 0 0 10px 5px rgba(0, 255, 255, 0.7)" // 'inset' для внутреннего свечения
+                                : "none", // Без свечения
+                            // transition: "box-shadow 0.3s ease-in-out", // Убрали transition для мгновенного эффекта
                         }}
                     />
                 ))}
                 {hoveredSquare !== null && (
                     <HoverPopUp
-                        top={`${Math.floor(hoveredSquare / cols) * squareHeight}%`}
-                        left={`${(hoveredSquare % cols) * squareWidth}%`}
-                        // Преобразование в строку, так как rowNames и colNames могут содержать числа
-                        label={`${rowNames[Math.floor(hoveredSquare / cols)]}-${colNames[hoveredSquare % cols]}`}
+                        top={`${(Math.floor(hoveredSquare / cols) * squareHeight) - 3}%`}
+                        left={`${((hoveredSquare % cols) * squareWidth) + 1}%`}
+                        label={`${rowNames[Math.floor(hoveredSquare / cols)]}-${colNames[hoveredSquare % cols]} ${hoveredName ? `(${hoveredName})` : ""}`}
                     />
                 )}
             </div>

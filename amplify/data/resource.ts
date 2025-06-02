@@ -3,18 +3,13 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 const schema = a.schema({
   Square: a
     .model({
-      coords: a.integer(),
-
-      dynastyId: a.string(),
-      dynasty: a.belongsTo('Dynasty', 'dynastyId'),
+      map: a.json().required(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
   Dynasty: a
     .model({
-      color: a.string(),
-      name: a.string(),
-
-      squares: a.hasMany('Square', 'dynastyId'),
+      color: a.string().required(),
+      name: a.string().required(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
 
